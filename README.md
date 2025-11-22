@@ -240,13 +240,13 @@ docker compose -f infra/docker-compose.yml exec mc mc ls local/avatars
 Set the bucket policy to public download (read):
 
 ```bash
-docker compose -f infra/docker-compose.yml exec mc mc policy set download local/avatars
+docker compose -f infra/docker-compose.yml exec mc mc anonymous set download local/avatars
 ```
 
 Check the policy info:
 
 ```bash
-docker compose -f infra/docker-compose.yml exec mc mc policy info local/avatars
+docker compose -f infra/docker-compose.yml exec mc mc anonymous info local/avatars
 ```
 
 Verify from the host (should return file content / HTTP headers):
