@@ -3,24 +3,6 @@ name = "realtime-service"
 version = "0.1.0"
 edition = "2024"
 
-[source.crates-io]
-replace-with = "vendored-sources"
-
-[source.vendored-sources]
-directory = "vendor"
-
-[net]
-retry = 10
-git-fetch-with-cli = true
-
-[http]
-timeout = 120
-low-speed-limit = 5
-multiplexing = false
-
-[build]
-jobs = 2
-
 [dependencies]
 actix-web = "4"
 tokio = { version = "1", features = ["full"] }
