@@ -9,12 +9,12 @@ mod events {
 mod middleware;
 
 use actix_web::{get, web, App, HttpResponse, HttpServer, Responder};
-use async_nats::connect;
+use actix_web::middleware::from_fn;
 use services::session_manager::SessionManager;
 use std::env;
 use std::io::Result;
 
-use crate::middleware::metrics::{metrics_handler, prometheus_middleware, register_metrics};
+use crate::middleware::metrics::{metrics_handler, metrics_middleware, register_metrics};
 
 #[get("/health")]
 async fn health_check() -> impl Responder {
@@ -50,12 +50,12 @@ async fn main() -> Result<()> {
 
     return HttpServer::new(move || {
         App::new()
-            .wrap_fn(prometheus_middleware)
+            .wrap(from_fn(metrics_middleware))
             .app_data(session_manager.clone())
             .app_data(nats_publisher.clone())
             .service(health_check)
             .route("/v1/ws/{session_id}", web::get().to(api::ws_handler::ws_route))
-            .route("/metrics", web::get().to(metrics_handler()))
+            .route("/metrics", web::get().to(metrics_handler))
     })
     .bind(("0.0.0.0", port))?
     .run()
