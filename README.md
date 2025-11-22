@@ -1,4 +1,4 @@
-# iOS Backend Monorepo
+# MentorPro Backend Monorepo
 
 Welcome to the backend repository for the **iOS SuperApp** project. This project uses a **Microservices** architecture organized as a **Monorepo**.
 
