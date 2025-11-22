@@ -36,3 +36,5 @@ temp/
 Thumbs.db
 # JetBrains IDEs (e.g., GoLand)
 .idea/
+
+vendor/
