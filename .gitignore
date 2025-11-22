@@ -1,0 +1,38 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+**/bin/
+
+# Environment files
+.env
+.env.*
+.env.local
+.env.production
+.env.development
+
+# Go vendor directory
+# The vendor directory is for vendored dependencies, but with Go modules
+# it's often not necessary to commit it.
+# vendor/
+
+# Logs and temporary files
+log/
+logs/
+*.log
+tmp/
+temp/
+
+# Editor and OS-specific files
+# Visual Studio Code
+.vscode/
+# macOS
+.DS_Store
+# Windows
+Thumbs.db
+# JetBrains IDEs (e.g., GoLand)
+.idea/

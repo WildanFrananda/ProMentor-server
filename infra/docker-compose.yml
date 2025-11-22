@@ -1,0 +1,166 @@
+services:
+  postgres:
+    image: postgres:15
+    container_name: ios_postgres
+    environment:
+      POSTGRES_DB: ios_backend
+      POSTGRES_USER: ios
+      POSTGRES_PASSWORD: ios_pass
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  redis:
+    image: redis:7
+    container_name: ios_redis
+    ports:
+      - "6379:6379"
+
+  nats:
+    image: nats:latest
+    container_name: ios_nats
+    ports:
+      - "4222:4222"
+      - "8222:8222"
+
+  auth-service:
+    container_name: auth-service
+    build:
+      context: ../services/auth-service
+      target: development
+    volumes:
+      - ../services/auth-service:/app
+    env_file:
+      - ../services/auth-service/.env.dev
+    ports:
+      - "8001:8001"
+    depends_on:
+      - postgres
+      - redis
+
+  user-service:
+    container_name: ios_user_service
+    build:
+      context: ../services/user-service
+      target: development
+    ports:
+      - "8002:8002"
+    volumes:
+      - ../services/user-service:/app
+    depends_on:
+      - postgres
+
+  minio:
+    image: minio/minio:latest
+    container_name: ios_minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+
+  prometheus:
+    image: prom/prometheus:v2.45.0
+    container_name: ios_prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+    depends_on:
+      - auth-service
+      - user-service
+      - bff-service
+      - realtime-service
+
+  grafana:
+    image: grafana/grafana-oss:10.0.3
+    container_name: ios_grafana
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    volumes:
+      - grafana_data:/var/lib/grafana
+    depends_on:
+      - prometheus
+
+  jaeger:
+    image: jaegertracing/all-in-one:1.53
+    container_name: ios_jaeger
+    ports:
+      - "16686:16686"
+      - "4317:4317"
+      # - "4318:4318"   # OTLP HTTP receiver (optional)
+    environment:
+      - COLLECTOR_OTLP_ENABLED=true
+    depends_on:
+      - nats
+
+  # mc:
+  #   image: minio/mc
+  #   container_name: ios_mc
+  #   depends_on:
+  #     - minio
+  #   entrypoint: ["sleep", "infinity"]
+
+  realtime-service:
+    container_name: ios_realtime_service
+    build:
+      context: ../services/realtime-service
+    ports:
+      - "8080:8080"
+    env_file:
+      - ../services/realtime-service/.env.dev
+    depends_on:
+      - nats
+
+  notification-worker:
+    container_name: ios_notification_worker
+    build:
+      context: ../services/notification-worker
+    env_file:
+      - ../services/notification-worker/.env.dev
+    depends_on:
+      - nats
+      - postgres
+
+  bff-service:
+    container_name: ios_bff_service
+    build:
+      context: ../services/bff-service
+      target: development
+    ports:
+      - "8000:8000"
+    volumes:
+      - ../services/bff-service:/app
+    depends_on:
+      - auth-service
+      - user-service
+
+  auth-service-migrate:
+    build:
+      context: ../services/auth-service
+      dockerfile: Dockerfile
+    env_file:
+      - ../services/auth-service/.env.dev
+    depends_on:
+      - postgres
+    command: ["migrate"]
+
+volumes:
+  pgdata:
+  minio_data:
+  grafana_data:

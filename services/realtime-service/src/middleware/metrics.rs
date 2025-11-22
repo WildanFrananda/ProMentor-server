@@ -1,0 +1,58 @@
+use std::time::Instant;
+
+use actix_web::{HttpResponse, Responder, dev, Error, Handler};
+use lazy_static::lazy_static;
+use prometheus::{CounterVec, Encoder, HistogramVec, Opts, Registry, TextEncoder};
+
+lazy_static! {
+    static ref HTTP_REQUESTS_TOTAL: CounterVec = CounterVec::new(
+        Opts::new("http_request_total_rust", "Number of HTTP requests"),
+        &["method", "path", "status_code"]
+    ).expect("Failed to create HTTP request counter");
+
+    static ref HTTP_REQUEST_DURATION: HistogramVec = HistogramVec::new(
+        prometheus::HistogramOpts::new("http_request_duration_second_rust", "Duration of HTTP requests"),
+        &["method", "path", "status_code"]
+    ).expect("Failed to create histogram");
+
+    static ref REGISTRY: Registry = Registry::new();
+}
+
+pub fn register_metrics() {
+    REGISTRY.register(Box::new(HTTP_REQUESTS_TOTAL.clone()))
+        .expect("Failed to register requests total counter");
+    REGISTRY.register(Box::new(HTTP_REQUEST_DURATION.clone()))
+        .expect("Failed to register request duration histogram");
+    REGISTRY.register(Box::new(prometheus::process_collector::ProcessCollector::for_self()))
+        .expect("Failed to register process collector");
+}
+
+pub async fn metrics_handler() -> impl Responder {
+    let encoder = TextEncoder::new();
+    let mut buffer = vec![];
+    let custom_metrics = REGISTRY.gather();
+    let default_metrics = prometheus::gather();
+
+    encoder.encode(&custom_metrics, &mut buffer).unwrap();
+    encoder.encode(&default_metrics, &mut buffer).unwrap();
+
+    return HttpResponse::Ok().content_type(encoder.format_type()).body(buffer);
+}
+
+pub async fn metrics_middleware(
+    req: HttpRequest,
+    srv: web::ServiceRequest,
+    next: web::Next<impl Handler<dev::ServiceRequest, Response = dev::ServiceResponse>>
+) -> Result<dev::ServiceRequest, Error> {
+    let start = Instant::now();
+    let path = req.match_pattern().unwrap_or_else(|| req.path().to_string());
+    let method = req.method().to_string();
+    let res = next.await?;
+    let status = res.status().as_u16().to_string();
+    let duration = start.elapsed().as_secs_f64();
+
+    HTTP_REQUESTS_TOTAL.with_label_values(&[&method, &path, &status]).inc();
+    HTTP_REQUEST_DURATION.with_label_values(&[&method, &path, &status]).observe(duration);
+
+    return Ok(res);
+}
