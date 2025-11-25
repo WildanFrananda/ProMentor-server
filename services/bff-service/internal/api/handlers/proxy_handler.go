@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"io"
 	"log"
 	"net/http"
@@ -26,7 +27,8 @@ func ProxyTo(baseURL string, targetPath string) fiber.Handler {
 
 		log.Printf("BFF redirect: %s -> %s", c.Path(), targetURL)
 
-		req, err := http.NewRequestWithContext(c.UserContext(), c.Method(), targetURL, c.Context().RequestBodyStream())
+		body := c.Body()
+		req, err := http.NewRequestWithContext(c.UserContext(), c.Method(), targetURL, bytes.NewReader(body))
 		if err != nil {
 			return err
 		}
@@ -34,6 +36,8 @@ func ProxyTo(baseURL string, targetPath string) fiber.Handler {
 		for key, value := range c.Request().Header.All() {
 			req.Header.Set(string(key), string(value))
 		}
+
+		req.ContentLength = int64(len(body))
 
 		req.Host = baseURL
 
