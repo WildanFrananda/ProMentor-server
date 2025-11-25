@@ -4,6 +4,7 @@ import (
 	"auth-service/internal/model"
 	"context"
 	"database/sql"
+	"strconv"
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
@@ -14,7 +15,7 @@ type SessionRepository interface {
 	FindByID(ctx context.Context, sessionID uuid.UUID) (*model.Session, error)
 	AddParticipant(ctx context.Context, sessionID, userID uuid.UUID, role string) error
 	CountParticipants(ctx context.Context, sessionID uuid.UUID) (int, error)
-	ListUpcoming(ctx context.Context) ([]model.SessionDetails, error)
+	ListUpcoming(ctx context.Context, limit int, offset int, query string) ([]model.SessionDetails, error)
 	ListHistoryByUserID(ctx context.Context, userID uuid.UUID) ([]model.SessionDetails, error)
 }
 
@@ -80,16 +81,27 @@ func (r *postgresSessionRepository) CountParticipants(ctx context.Context, sessi
 	return count, nil
 }
 
-func (r *postgresSessionRepository) ListUpcoming(ctx context.Context) ([]model.SessionDetails, error) {
+func (r *postgresSessionRepository) ListUpcoming(ctx context.Context, limit int, offset int, query string) ([]model.SessionDetails, error) {
 	var sessions []model.SessionDetails
-	query := `
+	sqlQuery := `
 		SELECT s.id, s.title, s.description, s.start_at, s.capacity, s.coach_id, u.name as coach_name
 		FROM sessions s
 		LEFT JOIN users u ON s.coach_id = u.id
-		WHERE s.start_at > NOW()
-		ORDER BY s.start_at ASC;
-	`
-	err := r.db.SelectContext(ctx, &sessions, query)
+		WHERE s.start_at > NOW()`
+
+	var args []interface{}
+	argCount := 1
+
+	if query != "" {
+		sqlQuery += " AND (s.title ILIKE $" + strconv.Itoa(argCount) + " OR s.description ILIKE $" + strconv.Itoa(argCount) + ")"
+		args = append(args, "%"+query+"%")
+		argCount++
+	}
+
+	sqlQuery += " ORDER BY s.start_at ASC LIMIT $" + strconv.Itoa(argCount) + " OFFSET $" + strconv.Itoa(argCount+1)
+	args = append(args, limit, offset)
+
+	err := r.db.SelectContext(ctx, &sessions, sqlQuery, args...)
 	return sessions, err
 }
 

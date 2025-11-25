@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
+	"strconv"
 	"time"
 
 	"github.com/go-playground/validator/v10"
@@ -102,7 +103,11 @@ func (h *SessionHandler) JoinSession(c *fiber.Ctx) error {
 }
 
 func (h *SessionHandler) ListUpcomingSessions(c *fiber.Ctx) error {
-	sessions, err := h.sessionService.ListUpcomingSessions(c.Context())
+	page, _ := strconv.Atoi(c.Query("page", "1"))
+	limit, _ := strconv.Atoi(c.Query("limit", "10"))
+	query := c.Query("query")
+
+	sessions, err := h.sessionService.ListUpcomingSessions(c.Context(), page, limit, query)
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not fetch upcoming sessions"})
 	}
