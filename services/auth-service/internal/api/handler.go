@@ -1,7 +1,9 @@
 package api
 
 import (
+	"encoding/json"
 	"errors"
+	"fmt"
 	"time"
 
 	"auth-service/internal/service"
@@ -32,10 +34,22 @@ type RegisterRequest struct {
 }
 
 func (h *AuthHandler) Register(c *fiber.Ctx) error {
-	var request RegisterRequest
+	raw := c.Body()
+	fmt.Printf("DEBUG Register: Content-Type=%s, BodyLen=%d, Body=%q\n", c.Get("Content-Type"), len(raw), string(raw))
 
-	if err := c.BodyParser(&request); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Cannot parse JSON", "details": err.Error()})
+	if len(raw) == 0 {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   "Cannot parse JSON",
+			"details": "empty request body",
+		})
+	}
+
+	var request RegisterRequest
+	if err := json.Unmarshal(raw, &request); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error":   "Cannot parse JSON",
+			"details": err.Error(),
+		})
 	}
 
 	if err := h.validate.Struct(&request); err != nil {
