@@ -35,7 +35,7 @@ func (h *AuthHandler) Register(c *fiber.Ctx) error {
 	var request RegisterRequest
 
 	if err := c.BodyParser(&request); err != nil {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Cannot parse JSON"})
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Cannot parse JSON", "details": err.Error()})
 	}
 
 	if err := h.validate.Struct(&request); err != nil {
