@@ -81,17 +81,6 @@ func main() {
 	ratingHandler := api.NewRatingHandler(ratingService)
 
 	app := fiber.New()
-	app.Use(func(c *fiber.Ctx) error {
-		b := c.Body()
-		fmt.Printf("[EARLY-MW] %s %s Content-Type=%s BodyLen=%d Body=%q\n",
-			c.Method(), c.Path(), c.Get("Content-Type"), len(b), string(b))
-
-		if len(b) > 0 {
-			c.Request().SetBody(b)
-		}
-
-		return c.Next()
-	})
 	app.Use(otelfiber.Middleware())
 	app.Use(api.PrometheusMiddleware())
 
