@@ -16,12 +16,14 @@ import (
 
 type SessionHandler struct {
 	sessionService service.SessionService
+	authService    service.AuthService
 	validate       *validator.Validate
 }
 
-func NewSessionHandler(sessionService service.SessionService) *SessionHandler {
+func NewSessionHandler(sessionService service.SessionService, authService service.AuthService) *SessionHandler {
 	return &SessionHandler{
 		sessionService: sessionService,
+		authService:    authService,
 		validate:       validator.New(),
 	}
 }
@@ -163,6 +165,37 @@ func (h *SessionHandler) GetSessionDetails(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(session)
+}
+
+func (h *SessionHandler) GetUserProfile(c *fiber.Ctx) error {
+	userID, err := GetUserIDFromClaims(c)
+	if err != nil {
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": err.Error()})
+	}
+	user, err := h.authService.GetUserProfile(c.Context(), userID)
+	if err != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "User not found"})
+	}
+
+	type UserProfileResponse struct {
+		ID        uuid.UUID `json:"id"`
+		Email     string    `json:"email"`
+		Name      string    `json:"name"`
+		AvatarURL *string   `json:"avatar_url,omitempty"`
+		CreatedAt time.Time `json:"created_at"`
+		UpdatedAt time.Time `json:"updated_at"`
+	}
+
+	response := UserProfileResponse{
+		ID:        user.ID,
+		Email:     user.Email,
+		Name:      user.Name,
+		AvatarURL: user.AvatarURL,
+		CreatedAt: user.CreatedAt,
+		UpdatedAt: user.UpdatedAt,
+	}
+
+	return c.Status(fiber.StatusOK).JSON(response)
 }
 
 func (h *SessionHandler) GetCategories(c *fiber.Ctx) error {

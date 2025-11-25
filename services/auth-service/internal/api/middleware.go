@@ -54,28 +54,27 @@ func AuthMiddleware() fiber.Handler {
 			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid token"})
 		}
 
-		c.Locals("userClaims", claims)
+		userIDStr, ok := claims["sub"].(string)
+		if !ok {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "User ID not found in token claims"})
+		}
+
+		userID, err := uuid.Parse(userIDStr)
+		if err != nil {
+			return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid user ID format in token"})
+		}
+
+		c.Locals("userID", userID)
 
 		return c.Next()
 	}
 }
 
 func GetUserIDFromClaims(c *fiber.Ctx) (uuid.UUID, error) {
-	claims, ok := c.Locals("userClaims").(jwtv5.MapClaims)
+	userID, ok := c.Locals("userID").(uuid.UUID)
 
 	if !ok {
 		return uuid.Nil, errors.New("claims not found in context")
-	}
-
-	userIDStr, ok := claims["sub"].(string)
-
-	if !ok {
-		return uuid.Nil, errors.New("user ID (sub) not found in claims")
-	}
-
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		return uuid.Nil, errors.New("invalid user ID format in claims")
 	}
 
 	return userID, nil

@@ -77,7 +77,7 @@ func main() {
 	}
 
 	authHandler := api.NewAuthHandler(authService)
-	sessionHandler := api.NewSessionHandler(sessionService)
+	sessionHandler := api.NewSessionHandler(sessionService, authService)
 	ratingHandler := api.NewRatingHandler(ratingService)
 
 	app := fiber.New()
@@ -100,7 +100,7 @@ func main() {
 
 	userRoutes := v1.Group("/users")
 	userRoutes.Use(api.AuthMiddleware())
-	userRoutes.Get("/me", authHandler.GetUserProfile)
+	userRoutes.Get("/me", sessionHandler.GetUserProfile)
 
 	sessionsRoutes := v1.Group("/sessions")
 	sessionsRoutes.Get("/", sessionHandler.ListUpcomingSessions)

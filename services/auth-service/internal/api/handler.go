@@ -138,16 +138,9 @@ func (h *AuthHandler) Logout(c *fiber.Ctx) error {
 }
 
 func (h *AuthHandler) GetUserProfile(c *fiber.Ctx) error {
-	userIDStr, ok := c.Locals("userID").(string)
-
-	if !ok {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "User ID not found in context"})
-	}
-
-	userID, err := uuid.Parse(userIDStr)
-
+	userID, err := GetUserIDFromClaims(c)
 	if err != nil {
-		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": "Invalid user ID format"})
+		return c.Status(fiber.StatusUnauthorized).JSON(fiber.Map{"error": err.Error()})
 	}
 
 	user, err := h.authService.GetUserProfile(c.Context(), userID)
