@@ -106,6 +106,8 @@ func main() {
 	sessionsRoutes.Get("/", sessionHandler.ListUpcomingSessions)
 	sessionsRoutes.Get("/:id", api.InternalAuthMiddleware(), sessionHandler.GetSessionDetails)
 
+	v1.Get("/categories", sessionHandler.GetCategories)
+
 	sessionsRoutes.Use(api.AuthMiddleware())
 	sessionsRoutes.Post("/", sessionHandler.CreateSession)
 	sessionsRoutes.Post("/:id/join", sessionHandler.JoinSession)
