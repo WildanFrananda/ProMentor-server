@@ -19,7 +19,7 @@ func ProxyTo(baseURL string, targetPath string) fiber.Handler {
 	}
 
 	return func(c *fiber.Ctx) error {
-		targetURL := baseURL + c.Path()
+		targetURL := baseURL + targetPath
 
 		for key, value := range c.AllParams() {
 			targetURL = strings.Replace(targetURL, ":"+key, value, 1)
