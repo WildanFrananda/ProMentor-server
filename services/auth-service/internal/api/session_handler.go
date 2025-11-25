@@ -6,11 +6,11 @@ import (
 	"database/sql"
 	"errors"
 	"log/slog"
-	"strconv"
 	"time"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/gofiber/fiber/v2"
+	jwtv5 "github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
@@ -33,7 +33,23 @@ type CreateSessionRequest struct {
 	Capacity    int       `json:"capacity" validate:"required,min=1"`
 }
 
+func GetRoleFromClaims(c *fiber.Ctx) string {
+	claims, ok := c.Locals("userClaims").(jwtv5.MapClaims)
+	if !ok {
+		return ""
+	}
+	return claims["role"].(string)
+}
+
 func (h *SessionHandler) CreateSession(c *fiber.Ctx) error {
+	role := GetRoleFromClaims(c)
+	if role != "coach" {
+		return c.Status(fiber.StatusForbidden).JSON(fiber.Map{
+			"error":   "Forbidden",
+			"message": "Only coaches can create sessions",
+		})
+	}
+
 	userID, err := GetUserIDFromClaims(c)
 
 	if err != nil {
@@ -103,16 +119,16 @@ func (h *SessionHandler) JoinSession(c *fiber.Ctx) error {
 }
 
 func (h *SessionHandler) ListUpcomingSessions(c *fiber.Ctx) error {
-	page, _ := strconv.Atoi(c.Query("page", "1"))
-	limit, _ := strconv.Atoi(c.Query("limit", "10"))
-	query := c.Query("query")
+	categoryID := c.Query("category_id")
+	page := c.QueryInt("page", 1)
+	limit := 10
 
-	sessions, err := h.sessionService.ListUpcomingSessions(c.Context(), page, limit, query)
+	result, err := h.sessionService.ListUpcomingSessions(c.Context(), categoryID, page, limit)
 	if err != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not fetch upcoming sessions"})
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not fetch sessions"})
 	}
 
-	return c.Status(fiber.StatusOK).JSON(sessions)
+	return c.Status(fiber.StatusOK).JSON(result)
 }
 
 func (h *SessionHandler) ListHistory(c *fiber.Ctx) error {
@@ -147,4 +163,12 @@ func (h *SessionHandler) GetSessionDetails(c *fiber.Ctx) error {
 	}
 
 	return c.Status(fiber.StatusOK).JSON(session)
+}
+
+func (h *SessionHandler) GetCategories(c *fiber.Ctx) error {
+	categories, err := h.sessionService.GetCategories(c.Context())
+	if err != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to fetch categories"})
+	}
+	return c.Status(fiber.StatusOK).JSON(categories)
 }

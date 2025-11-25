@@ -2,6 +2,7 @@ package api
 
 import (
 	"log"
+	"net/url"
 	"os"
 	"user-service/internal/s3"
 	"user-service/internal/service"
@@ -37,7 +38,9 @@ type RegisterTokenRequest struct {
 type UserProfileResponse struct {
 	ID        uuid.UUID `json:"id"`
 	Name      *string   `json:"name,omitempty"`
-	AvatarURL *string   `json:"avatar_url,omitempty"`
+	Email     string    `json:"email"`
+	Role      string    `json:"role"`
+	AvatarURL string    `json:"avatar_url"`
 }
 
 func (h *UserHandler) UpdateUserProfile(c *fiber.Ctx) error {
@@ -119,11 +122,23 @@ func (h *UserHandler) GetUserProfileByID(c *fiber.Ctx) error {
 		log.Printf("Error getting user profile by ID: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not fetch user profile"})
 	}
+	finalAvatar := ""
+	if user.AvatarURL != nil {
+		finalAvatar = *user.AvatarURL
+	} else {
+		name := ""
+		if user.Name != nil && *user.Name != "" {
+			name = url.QueryEscape(*user.Name)
+		}
+		finalAvatar = "https://ui-avatars.com/api/?name=" + name
+	}
 
 	response := UserProfileResponse{
 		ID:        user.ID,
 		Name:      user.Name,
-		AvatarURL: user.AvatarURL,
+		Email:     user.Email,
+		Role:      user.Role,
+		AvatarURL: finalAvatar,
 	}
 
 	return c.Status(fiber.StatusOK).JSON(response)

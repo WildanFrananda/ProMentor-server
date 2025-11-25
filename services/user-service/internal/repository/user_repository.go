@@ -26,7 +26,7 @@ func NewPostgresUserRepository(db *sqlx.DB) UserRepository {
 
 func (r *postgresUserRepository) FindByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
 	var user model.User
-	query := `SELECT id, email, name, created_at, updated_at FROM users WHERE id = $1`
+	query := `SELECT id, name, email, role, avatar_url FROM users WHERE id = $1`
 	err := r.db.GetContext(ctx, &user, query, id)
 
 	return &user, err

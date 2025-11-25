@@ -26,4 +26,5 @@ type SessionDetails struct {
 	Capacity    int        `db:"capacity" json:"capacity"`
 	CoachID     uuid.UUID  `db:"coach_id" json:"coach_id"`
 	CoachName   string     `db:"coach_name" json:"coach_name"`
+	CategoryID  *uuid.UUID `db:"category_id" json:"category_id,omitempty"`
 }

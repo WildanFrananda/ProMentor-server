@@ -28,7 +28,6 @@ type SessionDetailsResponse struct {
 	Title       string           `json:"title"`
 	Description string           `json:"description"`
 	StartAt     time.Time        `json:"start_at"`
-	EndAt       *time.Time       `json:"end_at,omitempty"`
 	Capacity    int              `json:"capacity"`
 	Coach       CoachProfileData `json:"coach"`
 	CreatedAt   time.Time        `json:"created_at"`

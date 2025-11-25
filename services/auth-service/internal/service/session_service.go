@@ -19,9 +19,10 @@ var (
 type SessionService interface {
 	CreateSession(ctx context.Context, session *model.Session) (*model.Session, error)
 	JoinSession(ctx context.Context, sessionID, userID uuid.UUID) error
-	ListUpcomingSessions(ctx context.Context, page int, limit int, query string) ([]model.SessionDetails, error)
+	ListUpcomingSessions(ctx context.Context, categoryID string, page int, limit int) (*repository.PaginatedSessions, error)
 	ListUserHistory(ctx context.Context, userID uuid.UUID) ([]model.SessionDetails, error)
 	GetSessionDetails(ctx context.Context, sessionID uuid.UUID) (*model.Session, error)
+	GetCategories(ctx context.Context) ([]model.Category, error)
 }
 
 type sessionService struct {
@@ -77,9 +78,8 @@ func (s *sessionService) JoinSession(ctx context.Context, sessionID, userID uuid
 	return nil
 }
 
-func (s *sessionService) ListUpcomingSessions(ctx context.Context, page int, limit int, query string) ([]model.SessionDetails, error) {
-	offset := (page - 1) * limit
-	return s.sessionRepo.ListUpcoming(ctx, limit, offset, query)
+func (s *sessionService) ListUpcomingSessions(ctx context.Context, categoryID string, page int, limit int) (*repository.PaginatedSessions, error) {
+	return s.sessionRepo.ListUpcoming(ctx, categoryID, page, limit)
 }
 
 func (s *sessionService) ListUserHistory(ctx context.Context, userID uuid.UUID) ([]model.SessionDetails, error) {
@@ -95,4 +95,8 @@ func (s *sessionService) GetSessionDetails(ctx context.Context, sessionID uuid.U
 		return nil, ErrSessionNotFound
 	}
 	return session, nil
+}
+
+func (s *sessionService) GetCategories(ctx context.Context) ([]model.Category, error) {
+	return s.sessionRepo.GetCategories(ctx)
 }

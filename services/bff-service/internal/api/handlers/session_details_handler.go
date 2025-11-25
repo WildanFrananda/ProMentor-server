@@ -135,7 +135,6 @@ func GetSessionDetails(authURL string, userURL string) fiber.Handler {
 			Title:       sessionData.Title,
 			Description: sessionData.Description,
 			StartAt:     sessionData.StartAt,
-			EndAt:       sessionData.EndAt,
 			Capacity:    sessionData.Capacity,
 			Coach:       *coachData,
 			CreatedAt:   sessionData.CreatedAt,

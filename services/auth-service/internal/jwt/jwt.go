@@ -15,6 +15,7 @@ func GenerateTokens(user *model.User) (accessToken string, refreshToken string, 
 		"sub":   user.ID,
 		"name":  user.Name,
 		"email": user.Email,
+		"role":  user.Role,
 		"exp":   time.Now().Add(time.Minute * 15).Unix(),
 	}
 	accessToken, err = jwt.NewWithClaims(jwt.SigningMethodHS256, accessClaims).SignedString(jwtSecret)

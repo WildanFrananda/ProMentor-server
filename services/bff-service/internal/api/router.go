@@ -29,4 +29,5 @@ func SetupRoutes(app *fiber.App, authURL string, userURL string) {
 	sessions.Post("/:id/rate", handlers.ProxyTo(authURL, "/v1/sessions/:id/rate"))
 
 	v1.Get("/session-details/:id", handlers.GetSessionDetails(authURL, userURL))
+	v1.Get("/categories", handlers.ProxyTo(authURL, "/v1/categories"))
 }
