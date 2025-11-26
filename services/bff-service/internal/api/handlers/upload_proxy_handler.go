@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"bytes"
 	"encoding/base64"
 	"io"
 	"log"
@@ -26,13 +27,14 @@ func HandleUploadProxy(c *fiber.Ctx) error {
 
 	log.Printf("🔄 BFF Proxy Uploading to: %s", targetURL)
 
-	proxyReq, err := http.NewRequest(c.Method(), targetURL, c.Context().RequestBodyStream())
+	bodyBytes := c.Body()
+	proxyReq, err := http.NewRequest(c.Method(), targetURL, bytes.NewReader(bodyBytes))
 
 	if err != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create proxy request"})
 	}
 
-	proxyReq.ContentLength = int64(c.Request().Header.ContentLength())
+	proxyReq.ContentLength = int64(len(bodyBytes))
 	proxyReq.Header.Set("Content-Type", c.Get("Content-Type"))
 
 	client := &http.Client{}
