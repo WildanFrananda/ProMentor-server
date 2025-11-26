@@ -103,13 +103,13 @@ func main() {
 	userRoutes.Get("/me", sessionHandler.GetUserProfile)
 
 	sessionsRoutes := v1.Group("/sessions")
+	sessionsRoutes.Use(api.AuthMiddleware())
 	sessionsRoutes.Get("/", sessionHandler.ListUpcomingSessions)
 	sessionsRoutes.Get("/history", sessionHandler.ListHistory)
 	sessionsRoutes.Get("/:id", api.InternalAuthMiddleware(), sessionHandler.GetSessionDetails)
 
 	v1.Get("/categories", sessionHandler.GetCategories)
 
-	sessionsRoutes.Use(api.AuthMiddleware())
 	sessionsRoutes.Post("/", sessionHandler.CreateSession)
 	sessionsRoutes.Post("/:id/join", sessionHandler.JoinSession)
 	sessionsRoutes.Post("/:id/rate", ratingHandler.RateSession)
