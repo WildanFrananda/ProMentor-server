@@ -49,6 +49,8 @@ services:
     build:
       context: ../services/user-service
       target: development
+    env_file:
+      - ../services/user-service/.env.dev
     ports:
       - "8002:8002"
     volumes:
