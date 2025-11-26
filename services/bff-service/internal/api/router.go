@@ -16,8 +16,8 @@ func SetupRoutes(app *fiber.App, authURL string, userURL string) {
 	auth.Post("/logout", handlers.ProxyTo(authURL, "/v1/auth/logout"))
 
 	profile := v1.Group("/profile")
-	profile.Get("/me", handlers.ProxyTo(authURL, "/v1/users/me"))
-	profile.Put("/me", handlers.ProxyTo(userURL, "/v1/users/me"))
+	profile.Get("/me", handlers.HandleGetMyProfile(userURL))
+	profile.Put("/me", handlers.HandleUpdateMyProfile(userURL))
 	profile.Post("/avatar/upload-url", handlers.GetAvatarUploadURLWithProxy(userURL))
 	profile.Post("/device-token", handlers.ProxyTo(userURL, "/v1/users/me/device-token"))
 
@@ -31,4 +31,5 @@ func SetupRoutes(app *fiber.App, authURL string, userURL string) {
 	v1.Get("/session-details/:id", handlers.GetSessionDetails(authURL, userURL))
 	v1.Get("/categories", handlers.ProxyTo(authURL, "/v1/categories"))
 	v1.Put("/proxy/upload", handlers.HandleUploadProxy)
+	v1.Get("/proxy/image", handlers.HandleDownloadProxy)
 }

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bff-service/internal/model"
+	"bff-service/internal/utils"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -128,6 +129,11 @@ func GetSessionDetails(authURL string, userURL string) fiber.Handler {
 
 		if coachData == nil {
 			coachData = &model.CoachProfileData{ID: sessionData.CoachID}
+		}
+
+		if coachData.AvatarURL != nil {
+			newURL := utils.RewriteAvatarURL(*coachData.AvatarURL, c.BaseURL())
+			coachData.AvatarURL = &newURL
 		}
 
 		response := model.SessionDetailsResponse{
