@@ -25,9 +25,9 @@ func NewPostgresUserRepository(db *sqlx.DB) UserRepository {
 }
 
 func (r *postgresUserRepository) Create(ctx context.Context, user *model.User) (uuid.UUID, error) {
-	query := `INSERT INTO users (email, password_hash, name) VALUES ($1, $2, $3) RETURNING id`
+	query := `INSERT INTO users (email, password_hash, name, role, avatar_url) VALUES ($1, $2, $3, $4, $5) RETURNING id`
 	var newID uuid.UUID
-	err := r.db.QueryRowxContext(ctx, query, user.Email, user.PasswordHash, user.Name).Scan(&newID)
+	err := r.db.QueryRowxContext(ctx, query, user.Email, user.PasswordHash, user.Name, user.Role, user.AvatarURL).Scan(&newID)
 
 	if err != nil {
 		return uuid.Nil, err
@@ -38,7 +38,7 @@ func (r *postgresUserRepository) Create(ctx context.Context, user *model.User) (
 
 func (r *postgresUserRepository) FindByEmail(ctx context.Context, email string) (*model.User, error) {
 	var user model.User
-	query := `SELECT id, email, password_hash, name, avatar_url, created_at, updated_at FROM users WHERE email = $1`
+	query := `SELECT id, email, password_hash, name, avatar_url, role, created_at, updated_at FROM users WHERE email = $1`
 	err := r.db.GetContext(ctx, &user, query, email)
 
 	if err != nil {
@@ -50,7 +50,7 @@ func (r *postgresUserRepository) FindByEmail(ctx context.Context, email string) 
 
 func (r *postgresUserRepository) FindByID(ctx context.Context, id uuid.UUID) (*model.User, error) {
 	var user model.User
-	query := `SELECT id, email, name, avatar_url, created_at, updated_at FROM users WHERE id = $1`
+	query := `SELECT id, email, password_hash, name, avatar_url, role, created_at, updated_at FROM users WHERE id = $1`
 	err := r.db.GetContext(ctx, &user, query, id)
 
 	fmt.Printf("DEBUG FindByID: %+v\n", user)

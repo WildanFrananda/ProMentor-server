@@ -52,6 +52,7 @@ func (s *authService) RegisterUser(ctx context.Context, email, password, name st
 		Email:        email,
 		PasswordHash: string(hashedPassword),
 		Name:         name,
+		Role:         "attendee",
 	}
 
 	newID, err := s.userRepo.Create(ctx, user)

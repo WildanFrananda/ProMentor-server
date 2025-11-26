@@ -154,6 +154,7 @@ func (h *AuthHandler) GetUserProfile(c *fiber.Ctx) error {
 		Email     string    `json:"email"`
 		Name      string    `json:"name"`
 		AvatarURL *string   `json:"avatar_url,omitempty"`
+		Role      string    `json:"role"`
 		CreatedAt time.Time `json:"created_at"`
 		UpdatedAt time.Time `json:"updated_at"`
 	}
@@ -163,6 +164,7 @@ func (h *AuthHandler) GetUserProfile(c *fiber.Ctx) error {
 		Email:     user.Email,
 		Name:      user.Name,
 		AvatarURL: user.AvatarURL,
+		Role:      user.Role,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	}
