@@ -7,6 +7,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -20,12 +21,21 @@ type UserProfileResponse struct {
 	AvatarURL string    `json:"avatar_url"`
 }
 
+// Use a shared client for performance and connection pooling
+var proxyClient = &http.Client{
+	Timeout: 10 * time.Second,
+}
+
 func HandleGetMyProfile(userURL string) fiber.Handler {
 	internalSecret := os.Getenv("INTERNAL_SHARED_SECRET")
 
 	return func(c *fiber.Ctx) error {
 		targetURL := fmt.Sprintf("%s/v1/users/me", userURL)
-		req, _ := http.NewRequest("GET", targetURL, nil)
+		req, err := http.NewRequest("GET", targetURL, nil)
+		if err != nil {
+			log.Printf("Error creating request for %s: %v", targetURL, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create request"})
+		}
 
 		req.Header.Set("Authorization", c.Get("Authorization"))
 
@@ -33,14 +43,11 @@ func HandleGetMyProfile(userURL string) fiber.Handler {
 			req.Header.Add("X-Internal-Secret", internalSecret)
 		}
 
-		client := &http.Client{}
-		resp, err := client.Do(req)
-
+		resp, err := proxyClient.Do(req)
 		if err != nil {
-			log.Printf("Error calling user service at %s: %v", targetURL, err)
-			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"error": "User service unavailable"})
+			log.Printf("Error calling service at %s: %v", targetURL, err)
+			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"error": "Service unavailable"})
 		}
-
 		defer resp.Body.Close()
 
 		if resp.StatusCode != http.StatusOK {
@@ -48,7 +55,6 @@ func HandleGetMyProfile(userURL string) fiber.Handler {
 		}
 
 		var profile UserProfileResponse
-
 		if err := json.NewDecoder(resp.Body).Decode(&profile); err != nil {
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to parse profile data"})
 		}
@@ -65,18 +71,23 @@ func HandleUpdateMyProfile(userURL string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		targetURL := fmt.Sprintf("%s/v1/users/me", userURL)
 
-		req, _ := http.NewRequest("PUT", targetURL, c.Context().RequestBodyStream())
-		req.Header.Set("Content-Type", "application/json")
+		req, err := http.NewRequest("PUT", targetURL, c.Context().RequestBodyStream())
+		if err != nil {
+			log.Printf("Error creating request for %s: %v", targetURL, err)
+			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create request"})
+		}
+		
+		// Forward necessary headers
+		req.Header.Set("Content-Type", c.Get("Content-Type"))
 		req.Header.Set("Authorization", c.Get("Authorization"))
 		if internalSecret != "" {
 			req.Header.Add("X-Internal-Secret", internalSecret)
 		}
 
-		client := &http.Client{}
-		resp, err := client.Do(req)
+		resp, err := proxyClient.Do(req)
 		if err != nil {
-			log.Printf("Error calling user service at %s: %v", targetURL, err)
-			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"error": "User service unavailable"})
+			log.Printf("Error calling service at %s: %v", targetURL, err)
+			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"error": "Service unavailable"})
 		}
 		defer resp.Body.Close()
 
