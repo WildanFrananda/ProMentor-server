@@ -17,7 +17,7 @@ func SetupRoutes(app *fiber.App, authURL string, userURL string) {
 
 	profile := v1.Group("/profile")
 	profile.Get("/me", handlers.HandleGetMyProfile(authURL))
-	profile.Put("/me", handlers.HandleUpdateMyProfile(authURL))
+	profile.Put("/me", handlers.HandleUpdateMyProfile(userURL))
 	profile.Post("/avatar/upload-url", handlers.GetAvatarUploadURLWithProxy(userURL))
 	profile.Post("/device-token", handlers.ProxyTo(userURL, "/v1/users/me/device-token"))
 
