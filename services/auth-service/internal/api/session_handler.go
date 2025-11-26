@@ -5,7 +5,6 @@ import (
 	"auth-service/internal/service"
 	"database/sql"
 	"errors"
-	"fmt"
 	"log/slog"
 	"time"
 
@@ -175,8 +174,6 @@ func (h *SessionHandler) GetUserProfile(c *fiber.Ctx) error {
 	}
 	user, err := h.authService.GetUserProfile(c.Context(), userID)
 
-	fmt.Printf("DEBUG GetUserProfile: %+v\n", user)
-
 	if err != nil {
 		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "User not found"})
 	}
@@ -186,6 +183,7 @@ func (h *SessionHandler) GetUserProfile(c *fiber.Ctx) error {
 		Email     string    `json:"email"`
 		Name      string    `json:"name"`
 		AvatarURL *string   `json:"avatar_url,omitempty"`
+		Role      string    `json:"role"`
 		CreatedAt time.Time `json:"created_at"`
 		UpdatedAt time.Time `json:"updated_at"`
 	}
@@ -195,6 +193,7 @@ func (h *SessionHandler) GetUserProfile(c *fiber.Ctx) error {
 		Email:     user.Email,
 		Name:      user.Name,
 		AvatarURL: user.AvatarURL,
+		Role:      user.Role,
 		CreatedAt: user.CreatedAt,
 		UpdatedAt: user.UpdatedAt,
 	}

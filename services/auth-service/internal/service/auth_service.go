@@ -5,7 +5,6 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"time"
 
 	"auth-service/internal/jwt"
@@ -98,10 +97,11 @@ func (s *authService) LoginUser(ctx context.Context, email, password string) (st
 
 func (s *authService) GetUserProfile(ctx context.Context, userID uuid.UUID) (*model.User, error) {
 	user, err := s.userRepo.FindByID(ctx, userID)
+
 	if err != nil {
 		return nil, err
 	}
-	fmt.Println("Debug: Auth Service GetUserProfile: ", user)
+
 	return user, nil
 }
 
