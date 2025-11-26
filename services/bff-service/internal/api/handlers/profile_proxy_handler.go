@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"bff-service/internal/utils"
+	"bytes"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -71,7 +72,9 @@ func HandleUpdateMyProfile(userURL string) fiber.Handler {
 	return func(c *fiber.Ctx) error {
 		targetURL := fmt.Sprintf("%s/v1/users/me", userURL)
 
-		req, err := http.NewRequest("PUT", targetURL, c.Context().RequestBodyStream())
+		// Read the body into a buffer to avoid streaming deadlocks
+		bodyBytes := c.Body()
+		req, err := http.NewRequest("PUT", targetURL, bytes.NewReader(bodyBytes))
 		if err != nil {
 			log.Printf("Error creating request for %s: %v", targetURL, err)
 			return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Failed to create request"})
@@ -80,6 +83,7 @@ func HandleUpdateMyProfile(userURL string) fiber.Handler {
 		// Forward necessary headers
 		req.Header.Set("Content-Type", c.Get("Content-Type"))
 		req.Header.Set("Authorization", c.Get("Authorization"))
+		req.ContentLength = int64(len(bodyBytes)) // Set content length since we're using a buffer
 		if internalSecret != "" {
 			req.Header.Add("X-Internal-Secret", internalSecret)
 		}
