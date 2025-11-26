@@ -104,6 +104,7 @@ func main() {
 
 	sessionsRoutes := v1.Group("/sessions")
 	sessionsRoutes.Get("/", sessionHandler.ListUpcomingSessions)
+	sessionsRoutes.Get("/history", sessionHandler.ListHistory)
 	sessionsRoutes.Get("/:id", api.InternalAuthMiddleware(), sessionHandler.GetSessionDetails)
 
 	v1.Get("/categories", sessionHandler.GetCategories)
@@ -111,7 +112,6 @@ func main() {
 	sessionsRoutes.Use(api.AuthMiddleware())
 	sessionsRoutes.Post("/", sessionHandler.CreateSession)
 	sessionsRoutes.Post("/:id/join", sessionHandler.JoinSession)
-	sessionsRoutes.Get("/history", sessionHandler.ListHistory)
 	sessionsRoutes.Post("/:id/rate", ratingHandler.RateSession)
 
 	port := os.Getenv("APP_PORT")
