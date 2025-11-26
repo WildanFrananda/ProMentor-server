@@ -4,6 +4,7 @@ import (
 	"bff-service/internal/utils"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"os"
 
@@ -36,6 +37,7 @@ func HandleGetMyProfile(userURL string) fiber.Handler {
 		resp, err := client.Do(req)
 
 		if err != nil {
+			log.Printf("Error calling user service at %s: %v", targetURL, err)
 			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"error": "User service unavailable"})
 		}
 
@@ -73,6 +75,7 @@ func HandleUpdateMyProfile(userURL string) fiber.Handler {
 		client := &http.Client{}
 		resp, err := client.Do(req)
 		if err != nil {
+			log.Printf("Error calling user service at %s: %v", targetURL, err)
 			return c.Status(fiber.StatusServiceUnavailable).JSON(fiber.Map{"error": "User service unavailable"})
 		}
 		defer resp.Body.Close()

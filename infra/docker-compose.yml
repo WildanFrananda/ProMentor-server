@@ -146,6 +146,8 @@ services:
       target: development
     ports:
       - "8000:8000"
+    env_file:
+      - ../services/bff-service/.env.dev
     volumes:
       - ../services/bff-service:/app
     depends_on:
